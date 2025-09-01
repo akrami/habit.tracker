@@ -1,0 +1,17 @@
+node_modules
+npm-debug.log
+.next
+.env.local
+.env*.local
+Dockerfile*
+.dockerignore
+README.md
+.git
+.gitignore
+*.log
+.vscode
+.idea
+coverage
+.nyc_output
+docker-compose*.yml
+tsconfig.tsbuildinfo

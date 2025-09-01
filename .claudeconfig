@@ -1,0 +1,114 @@
+# Claude Code Configuration
+
+This configuration file helps Claude Code understand this project and work more effectively with it.
+
+## Project Overview
+This is a comprehensive habit tracking web application built with Next.js, TypeScript, Tailwind CSS, and Preline UI. Users can track daily habits, visualize progress with charts and analytics, and build positive routines.
+
+## Technology Stack
+- **Frontend**: Next.js 15, TypeScript, Tailwind CSS 4, Preline UI 3.2, React 19
+- **Backend**: Next.js API Routes, NextAuth.js, Prisma ORM, SQLite
+- **UI Components**: Preline UI (JavaScript-based components), Lucide React icons
+- **Charts**: Recharts, React Calendar Heatmap
+- **Database**: SQLite with Prisma ORM (zero setup required)
+
+## Development Commands
+```bash
+# Development
+npm run dev              # Start development server with Turbopack
+npm run build           # Build for production
+npm run start           # Start production server
+
+# Code Quality
+npm run lint            # Run ESLint
+npm run typecheck       # Run TypeScript compiler
+
+# Database
+npm run db:generate     # Generate Prisma client
+npm run db:push         # Apply schema changes to SQLite (recommended over migrations)
+npm run db:studio       # Open Prisma Studio
+npm run db:seed         # Seed database with default categories
+```
+
+## Project Structure
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes
+│   ├── auth/              # Authentication pages
+│   ├── dashboard/         # Dashboard pages
+│   └── globals.css        # Global styles with Preline UI imports
+├── components/            # React components
+│   ├── auth/              # Authentication components
+│   ├── habits/            # Habit-related components
+│   ├── layout/            # Layout components
+│   ├── ui/                # Custom UI components (Preline-based)
+│   └── preline-init.tsx   # Preline UI initialization
+├── lib/                   # Utility functions
+│   ├── auth.ts            # NextAuth configuration
+│   ├── prisma.ts          # Database client
+│   └── utils.ts           # Helper functions
+└── prisma/                # Database schema
+    ├── schema.prisma      # SQLite schema
+    └── seed.ts            # Database seeding
+```
+
+## Important Notes
+
+### Database Configuration
+- Uses SQLite database (file:./dev.db)
+- **Use `prisma db push`** instead of migrations for SQLite
+- Schema is managed directly through schema.prisma file
+- No migration files needed for SQLite development
+
+### UI Components
+- All components are based on Preline UI patterns
+- Custom implementations replace Radix UI (fully removed)
+- Preline UI CSS imported in globals.css: `@import "preline/variants.css"`
+- Preline UI JavaScript automatically initialized via PrelineInit component
+
+### Authentication
+- NextAuth.js with credential-based authentication
+- Secure password hashing with bcryptjs
+- Session management with JWT tokens
+
+### Styling Approach
+- Tailwind CSS 4 with utility-first approach
+- Preline UI component library for consistent design
+- Mobile-first responsive design
+- Full dark mode support
+
+## Key Dependencies
+- `preline`: ^3.2.3 (UI component library)
+- `next`: 15.5.2 (React framework)
+- `@prisma/client`: ^5.20.0 (Database ORM)
+- `next-auth`: ^4.24.8 (Authentication)
+- `tailwindcss`: ^4 (CSS framework)
+- `recharts`: ^2.13.3 (Charts and analytics)
+
+## Environment Variables
+Required in .env.local:
+```env
+DATABASE_URL="file:./dev.db"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secure-secret-key"
+```
+
+## Development Workflow
+1. Start development server: `npm run dev`
+2. Make schema changes in prisma/schema.prisma
+3. Apply changes: `npm run db:push`
+4. Always run `npm run typecheck` and `npm run lint` before committing
+5. Test UI changes to ensure Preline UI styling works correctly
+
+## Deployment
+- Docker support with multi-stage builds
+- SQLite database stored in Docker volumes
+- Production-optimized with Alpine Linux base images
+- Zero external database dependencies
+
+## Testing Strategy
+- TypeScript for compile-time error checking
+- ESLint for code quality
+- Manual testing with development server
+- No specific test framework configured currently

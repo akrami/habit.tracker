@@ -70,7 +70,7 @@ A comprehensive, modern habit tracking web application built with Next.js, TypeS
 4. **Set up the database**
    ```bash
    npx prisma generate
-   npx prisma db push  # Creates SQLite database automatically
+   npx prisma db push  # Creates SQLite database and applies schema
    npm install tsx  # Required for seeding
    npm run db:seed  # Optional: Add default categories
    ```
@@ -92,7 +92,7 @@ A comprehensive, modern habit tracking web application built with Next.js, TypeS
    docker-compose up -d
    ```
 
-2. **Run database migrations** (SQLite database is created automatically)
+2. **Apply database schema** (SQLite database is created automatically)
    ```bash
    docker-compose exec app npx prisma db push
    ```
@@ -172,9 +172,8 @@ docker-compose -f docker-compose.dev.yml up -d
 ### Frontend
 - **Next.js 15** - React framework with App Router
 - **TypeScript** - Type-safe JavaScript
-- **Tailwind CSS 4** - Utility-first CSS framework
-- **Preline UI** - Modern component library with dark mode support
-- **Radix UI** - Accessible low-level primitives
+- **Tailwind CSS 4** - Utility-first CSS framework  
+- **Preline UI 3.2** - Modern component library with dark mode support (JavaScript-based components)
 - **Lucide React** - Beautiful icons
 - **Recharts** - Chart visualization library
 - **React Calendar Heatmap** - GitHub-style heatmaps
@@ -211,6 +210,15 @@ The application uses SQLite with a well-structured schema managed by Prisma with
 - **Cross-platform** - Works on all operating systems
 - **ACID Compliance** - Full transaction support
 - **Small Footprint** - Perfect for containerized deployments
+
+### Schema Management with SQLite
+
+This project uses **`prisma db push`** instead of migrations for SQLite:
+
+- **`db push`** - Directly applies schema changes to the database (recommended for SQLite)
+- **Migrations** - Not used as they're better suited for production databases like PostgreSQL
+- **Schema changes** - Simply run `npx prisma db push` after modifying `schema.prisma`
+- **No migration files** - SQLite schema is managed directly through the Prisma schema file
 
 ### Database Backup & Migration
 
@@ -296,8 +304,7 @@ cp backup-20231201.db dev.db
 - `npm run lint` - Run ESLint
 - `npm run typecheck` - Run TypeScript compiler
 - `npm run db:generate` - Generate Prisma client
-- `npm run db:push` - Push schema to database
-- `npm run db:migrate` - Run database migrations
+- `npm run db:push` - Apply schema changes to SQLite database
 - `npm run db:studio` - Open Prisma Studio
 
 ### Project Structure
@@ -339,7 +346,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Preline UI](https://preline.co/) - Modern UI components with dark mode
 - [Prisma](https://prisma.io/) - Next-generation ORM
 - [NextAuth.js](https://next-auth.js.org/) - Authentication for Next.js
-- [Radix UI](https://radix-ui.com/) - Low-level UI primitives
 - [Recharts](https://recharts.org/) - Composable charting library
 
 ---

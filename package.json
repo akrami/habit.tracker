@@ -12,7 +12,10 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "user:create": "tsx scripts/create-user.ts",
+    "user:delete": "tsx scripts/delete-user.ts",
+    "user:list": "tsx scripts/list-users.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

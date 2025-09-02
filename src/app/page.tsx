@@ -12,13 +12,13 @@ export default async function Home() {
   }
 
   return (
-    <div className="relative overflow-hidden before:absolute before:top-0 before:start-1/2 before:bg-[url('https://preline.co/assets/svg/examples/polygon-bg-element.svg')] before:bg-no-repeat before:bg-top before:bg-cover before:size-full before:-z-[1] before:transform before:-translate-x-1/2">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-violet-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden">
       <div className="max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-10">
         {/* Title */}
         <div className="mt-5 max-w-2xl text-center mx-auto">
           <h1 className="block font-bold text-gray-800 text-4xl md:text-5xl lg:text-6xl dark:text-gray-200">
             Brick by
-            <span className="bg-gradient-to-tl from-blue-600 to-violet-600 bg-clip-text text-transparent"> Brick</span>
+            <span className="bg-gradient-to-tl from-blue-600 to-violet-600 bg-clip-text text-transparent dark:text-cyan-400"> Brick</span>
           </h1>
         </div>
         {/* End Title */}

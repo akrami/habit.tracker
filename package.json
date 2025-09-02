@@ -17,6 +17,7 @@
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
     "@next-auth/prisma-adapter": "^1.0.7",
+    "@preline/theme-switch": "^3.2.3",
     "@prisma/client": "^5.20.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/react-calendar-heatmap": "^1.6.7",

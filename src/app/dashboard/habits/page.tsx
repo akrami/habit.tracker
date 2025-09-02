@@ -114,7 +114,7 @@ export default function HabitsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">My Habits</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">My Habits</h1>
         <Button onClick={() => setShowCreateDialog(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Add Habit
@@ -122,10 +122,10 @@ export default function HabitsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow space-y-4">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
             <Input
               placeholder="Search habits..."
               value={searchQuery}
@@ -137,7 +137,7 @@ export default function HabitsPage() {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as any)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="all">All Habits</option>
             <option value="active">Active</option>
@@ -145,7 +145,7 @@ export default function HabitsPage() {
           </select>
         </div>
 
-        <div className="flex justify-between items-center text-sm text-gray-600">
+        <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
           <span>
             Showing {filteredHabits.length} of {habits.length} habits
           </span>
@@ -166,14 +166,14 @@ export default function HabitsPage() {
         <div className="text-center py-12">
           {habits.length === 0 ? (
             <>
-              <p className="text-gray-500 mb-4">No habits yet. Create your first habit to get started!</p>
+              <p className="text-gray-500 dark:text-gray-400 mb-4">No habits yet. Create your first habit to get started!</p>
               <Button onClick={() => setShowCreateDialog(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Create Your First Habit
               </Button>
             </>
           ) : (
-            <p className="text-gray-500">No habits match your current filters.</p>
+            <p className="text-gray-500 dark:text-gray-400">No habits match your current filters.</p>
           )}
         </div>
       ) : (

@@ -20,7 +20,7 @@ interface Habit {
     name: string
     color: string
   }
-  entries: Array<{
+  entries?: Array<{
     id: string
     date: string
     value: number
@@ -58,6 +58,21 @@ export default function DashboardPage() {
 
   const handleHabitToggle = async (habitId: string, date: string, completed: boolean) => {
     try {
+      const habit = habits.find(h => h.id === habitId)
+      if (!habit) return
+
+      const todayEntry = (habit.entries || []).find(entry => entry.date === date)
+      const currentValue = todayEntry?.value || 0
+      
+      let newValue: number
+      if (completed) {
+        // If clicking to complete, increment by 1 up to the target
+        newValue = Math.min(currentValue + 1, habit.target)
+      } else {
+        // If clicking to uncomplete, set to 0
+        newValue = 0
+      }
+
       const response = await fetch(`/api/habits/${habitId}/entries`, {
         method: "POST",
         headers: {
@@ -65,7 +80,7 @@ export default function DashboardPage() {
         },
         body: JSON.stringify({
           date,
-          value: completed ? 1 : 0,
+          value: newValue,
         }),
       })
 
@@ -79,19 +94,24 @@ export default function DashboardPage() {
 
   const getTodaysStats = () => {
     const today = format(new Date(), "yyyy-MM-dd")
-    const todayEntries = habits.flatMap(habit => 
-      habit.entries.filter(entry => entry.date === today)
-    )
-    const completed = todayEntries.filter(entry => entry.value > 0).length
+    let completed = 0
+    
+    habits.forEach(habit => {
+      const todayEntry = (habit.entries || []).find(entry => entry.date === today)
+      const currentValue = todayEntry?.value || 0
+      if (currentValue >= habit.target) {
+        completed++
+      }
+    })
+    
     const total = habits.length
-
     return { completed, total }
   }
 
   const getStreak = (habit: Habit) => {
     let streak = 0
-    const sortedEntries = habit.entries
-      .filter(entry => entry.value > 0)
+    const sortedEntries = (habit.entries || [])
+      .filter(entry => entry.value >= habit.target)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
     for (let i = 0; i < sortedEntries.length; i++) {
@@ -165,14 +185,16 @@ export default function DashboardPage() {
           <div className="grid gap-4">
             {habits.map((habit) => {
               const today = format(new Date(), "yyyy-MM-dd")
-              const todayEntry = habit.entries.find(entry => entry.date === today)
-              const isCompleted = todayEntry && todayEntry.value > 0
+              const todayEntry = (habit.entries || []).find(entry => entry.date === today)
+              const currentValue = todayEntry?.value || 0
+              const isCompleted = currentValue >= habit.target
 
               return (
                 <HabitCard
                   key={habit.id}
                   habit={habit}
-                  isCompleted={!!isCompleted}
+                  isCompleted={isCompleted}
+                  currentValue={currentValue}
                   streak={getStreak(habit)}
                   onToggle={(completed) => handleHabitToggle(habit.id, today, completed)}
                   onRefresh={fetchHabits}

@@ -27,12 +27,13 @@ interface HabitCardProps {
     }>
   }
   isCompleted: boolean
+  currentValue: number
   streak: number
   onToggle: (completed: boolean) => void
   onRefresh?: () => void
 }
 
-export default function HabitCard({ habit, isCompleted, streak, onToggle, onRefresh }: HabitCardProps) {
+export default function HabitCard({ habit, isCompleted, currentValue, streak, onToggle, onRefresh }: HabitCardProps) {
   const [showNotesDialog, setShowNotesDialog] = useState(false)
   
   const today = format(new Date(), "yyyy-MM-dd")
@@ -67,7 +68,7 @@ export default function HabitCard({ habit, isCompleted, streak, onToggle, onRefr
                 </span>
               )}
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                Target: {habit.target}{habit.unit && ` ${habit.unit}`}
+                Progress: {currentValue}/{habit.target}{habit.unit && ` ${habit.unit}`}
               </span>
               {streak > 0 && (
                 <span className="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-800/30 dark:text-orange-500">
@@ -75,6 +76,19 @@ export default function HabitCard({ habit, isCompleted, streak, onToggle, onRefr
                 </span>
               )}
             </div>
+            {habit.target > 1 && (
+              <div className="mt-3">
+                <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+                  <div 
+                    className="h-2 rounded-full transition-all duration-300"
+                    style={{ 
+                      backgroundColor: habit.color,
+                      width: `${Math.min((currentValue / habit.target) * 100, 100)}%` 
+                    }}
+                  ></div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

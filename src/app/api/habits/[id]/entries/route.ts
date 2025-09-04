@@ -6,7 +6,7 @@ import { z } from "zod"
 
 const createEntrySchema = z.object({
   date: z.string(),
-  value: z.number().min(1).default(1),
+  value: z.number().min(0).default(1),
   notes: z.string().optional(),
 })
 

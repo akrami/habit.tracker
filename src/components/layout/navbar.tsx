@@ -3,9 +3,11 @@
 import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export default function Navbar() {
   const { data: session } = useSession()
+  const router = useRouter()
 
   return (
     <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 fixed w-full z-20 top-0">
@@ -26,7 +28,11 @@ export default function Navbar() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => signOut()}
+                onClick={() => {
+                  signOut({ redirect: false }).then(() => {
+                    window.location.href = "/"
+                  })
+                }}
               >
                 Sign out
               </Button>

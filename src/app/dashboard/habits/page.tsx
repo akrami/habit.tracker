@@ -22,17 +22,11 @@ interface Habit {
     name: string
     color: string
   }
-  entries: Array<{
+  entries?: Array<{
     id: string
     date: string
     value: number
     notes?: string
-  }>
-  goals: Array<{
-    id: string
-    title: string
-    target: number
-    isCompleted: boolean
   }>
 }
 

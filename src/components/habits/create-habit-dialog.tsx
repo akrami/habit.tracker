@@ -234,7 +234,17 @@ export default function CreateHabitDialog({ open, onOpenChange, onSuccess }: Cre
             <Label>Category</Label>
             <Select value={categoryId} onValueChange={setCategoryId}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a category (optional)" />
+                <SelectValue placeholder="Select a category (optional)">
+                  {categoryId && categories.find(c => c.id === categoryId) && (
+                    <div className="flex items-center">
+                      <div 
+                        className="w-3 h-3 rounded-full mr-2" 
+                        style={{ backgroundColor: categories.find(c => c.id === categoryId)?.color }}
+                      />
+                      {categories.find(c => c.id === categoryId)?.name}
+                    </div>
+                  )}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {categories.map((category) => (

@@ -21,17 +21,11 @@ interface Habit {
     name: string
     color: string
   }
-  entries: Array<{
+  entries?: Array<{
     id: string
     date: string
     value: number
     notes?: string
-  }>
-  goals: Array<{
-    id: string
-    title: string
-    target: number
-    isCompleted: boolean
   }>
 }
 
@@ -46,29 +40,52 @@ export default function HabitList({ habits, onHabitUpdated, onHabitDeleted }: Ha
   const [showDropdown, setShowDropdown] = useState<string | null>(null)
 
   const getStreak = (habit: Habit) => {
-    let streak = 0
-    const sortedEntries = habit.entries
+    let currentStreak = 0
+    
+    // Get all completed entries as date strings
+    const entries = habit.entries || []
+    const completedEntries = entries
       .filter(entry => entry.value > 0)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-
-    for (let i = 0; i < sortedEntries.length; i++) {
-      const entryDate = new Date(sortedEntries[i].date)
-      const expectedDate = new Date()
-      expectedDate.setDate(expectedDate.getDate() - i)
-
-      if (format(entryDate, "yyyy-MM-dd") === format(expectedDate, "yyyy-MM-dd")) {
-        streak++
+      .map(entry => entry.date)
+    
+    const today = format(new Date(), "yyyy-MM-dd")
+    
+    // Calculate current streak (going backwards from today)
+    let currentDate = today
+    let dayIndex = 0
+    
+    while (dayIndex < 365) { // Limit to prevent infinite loops
+      const hasEntry = completedEntries.includes(currentDate)
+      
+      if (hasEntry) {
+        currentStreak++
       } else {
+        // If we haven't found any entries yet, check previous day
+        // Otherwise, break the streak
+        if (currentStreak > 0) {
+          break
+        }
+      }
+      
+      // Move to previous day
+      const date = new Date(currentDate)
+      date.setDate(date.getDate() - 1)
+      currentDate = format(date, "yyyy-MM-dd")
+      dayIndex++
+      
+      // If we haven't found any entries in the first 30 days, stop
+      if (currentStreak === 0 && dayIndex > 30) {
         break
       }
     }
 
-    return streak
+    return currentStreak
   }
 
   const getTodaysEntry = (habit: Habit) => {
     const today = format(new Date(), "yyyy-MM-dd")
-    return habit.entries.find(entry => entry.date === today)
+    const entries = habit.entries || []
+    return entries.find(entry => entry.date === today)
   }
 
   const handleToggleToday = async (habit: Habit) => {
@@ -90,10 +107,11 @@ export default function HabitList({ habits, onHabitUpdated, onHabitDeleted }: Ha
 
       if (response.ok) {
         const updatedEntry = await response.json()
+        const entries = habit.entries || []
         const updatedHabit = {
           ...habit,
           entries: [
-            ...habit.entries.filter(e => e.date !== today),
+            ...entries.filter(e => e.date !== today),
             updatedEntry,
           ],
         }
@@ -149,8 +167,9 @@ export default function HabitList({ habits, onHabitUpdated, onHabitDeleted }: Ha
         const todayEntry = getTodaysEntry(habit)
         const isCompletedToday = todayEntry && todayEntry.value > 0
         const streak = getStreak(habit)
-        const completionRate = habit.entries.length > 0 
-          ? Math.round((habit.entries.filter(e => e.value > 0).length / habit.entries.length) * 100)
+        const entries = habit.entries || []
+        const completionRate = entries.length > 0 
+          ? Math.round((entries.filter(e => e.value > 0).length / entries.length) * 100)
           : 0
 
         return (
@@ -288,7 +307,6 @@ export default function HabitList({ habits, onHabitUpdated, onHabitDeleted }: Ha
               ...updatedHabit,
               isActive: true,
               entries: editingHabit.entries || [],
-              goals: editingHabit.goals || [],
             } as Habit)
             setEditingHabit(null)
           }}

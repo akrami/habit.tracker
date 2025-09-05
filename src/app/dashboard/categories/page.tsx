@@ -40,8 +40,10 @@ export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
 
-  // Create category form state
+  // Create/Edit category form state
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [color, setColor] = useState("#6366f1")
@@ -102,6 +104,69 @@ export default function CategoriesPage() {
     setDescription("")
     setColor("#6366f1")
     setIcon("")
+    setEditingCategory(null)
+  }
+
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category)
+    setName(category.name)
+    setDescription(category.description || "")
+    setColor(category.color)
+    setIcon(category.icon || "")
+    setShowEditDialog(true)
+  }
+
+  const handleUpdateCategory = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingCategory) return
+    
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch(`/api/categories/${editingCategory.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          description: description || undefined,
+          color,
+          icon: icon || undefined,
+        }),
+      })
+
+      if (response.ok) {
+        const updatedCategory = await response.json()
+        setCategories(categories.map(cat => 
+          cat.id === editingCategory.id ? updatedCategory : cat
+        ))
+        resetForm()
+        setShowEditDialog(false)
+      }
+    } catch (error) {
+      console.error("Failed to update category:", error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (!window.confirm("Are you sure you want to delete this category?")) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/categories/${categoryId}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        setCategories(categories.filter(cat => cat.id !== categoryId))
+      }
+    } catch (error) {
+      console.error("Failed to delete category:", error)
+    }
   }
 
   if (isLoading) {
@@ -154,10 +219,10 @@ export default function CategoriesPage() {
                 </div>
 
                 <div className="flex items-center space-x-1">
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" onClick={() => handleEditCategory(category)}>
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" onClick={() => handleDeleteCategory(category.id)}>
                     <Trash2 className="h-4 w-4 text-red-600" />
                   </Button>
                 </div>
@@ -246,6 +311,91 @@ export default function CategoriesPage() {
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Creating..." : "Create Category"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Category Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Category</DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleUpdateCategory} className="space-y-4">
+            <div>
+              <Label htmlFor="edit-name">Category Name *</Label>
+              <Input
+                id="edit-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g., Health & Fitness, Learning"
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-description">Description</Label>
+              <textarea
+                id="edit-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Optional description"
+                className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-vertical"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Color</Label>
+                <Select value={color} onValueChange={setColor}>
+                  <SelectTrigger>
+                    <SelectValue>
+                      <div className="flex items-center">
+                        <div
+                          className="w-4 h-4 rounded-full mr-2"
+                          style={{ backgroundColor: color }}
+                        />
+                        {colorOptions.find(c => c.value === color)?.name}
+                      </div>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {colorOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        <div className="flex items-center">
+                          <div
+                            className="w-4 h-4 rounded-full mr-2"
+                            style={{ backgroundColor: option.value }}
+                          />
+                          {option.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="edit-icon">Icon (Emoji)</Label>
+                <Input
+                  id="edit-icon"
+                  value={icon}
+                  onChange={(e) => setIcon(e.target.value)}
+                  placeholder="e.g., 💪, 📚, 🏃"
+                  maxLength={2}
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Updating..." : "Update Category"}
               </Button>
             </DialogFooter>
           </form>

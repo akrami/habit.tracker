@@ -30,25 +30,28 @@ export async function GET() {
       },
       include: {
         category: true,
-        tags: {
-          include: {
-            tag: true,
-          },
-        },
         entries: {
           orderBy: {
             date: "desc",
           },
           take: 30,
         },
-        goals: true,
       },
       orderBy: {
         createdAt: "desc",
       },
     })
 
-    return NextResponse.json(habits)
+    // Transform the data to ensure dates are serialized as strings
+    const transformedHabits = habits.map(habit => ({
+      ...habit,
+      entries: habit.entries.map(entry => ({
+        ...entry,
+        date: entry.date.toISOString().split('T')[0] // Convert to YYYY-MM-DD format
+      }))
+    }))
+
+    return NextResponse.json(transformedHabits)
   } catch (error) {
     console.error("Error fetching habits:", error)
     return NextResponse.json(
@@ -76,15 +79,25 @@ export async function POST(request: NextRequest) {
       },
       include: {
         category: true,
-        tags: {
-          include: {
-            tag: true,
+        entries: {
+          orderBy: {
+            date: "desc",
           },
+          take: 30,
         },
       },
     })
 
-    return NextResponse.json(habit)
+    // Transform the data to ensure dates are serialized as strings
+    const transformedHabit = {
+      ...habit,
+      entries: habit.entries.map(entry => ({
+        ...entry,
+        date: entry.date.toISOString().split('T')[0] // Convert to YYYY-MM-DD format
+      }))
+    }
+
+    return NextResponse.json(transformedHabit)
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

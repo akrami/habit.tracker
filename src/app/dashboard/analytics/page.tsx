@@ -2,14 +2,17 @@
 
 import { useEffect, useState } from "react"
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts"
+import dynamic from "next/dynamic"
 import CalendarHeatmap from "react-calendar-heatmap"
 import "react-calendar-heatmap/dist/styles.css"
+
+const Chart = dynamic(() => import("react-apexcharts"), { ssr: false })
 
 interface Habit {
   id: string
   name: string
   color: string
+  isActive: boolean
   entries: Array<{
     date: string
     value: number
@@ -28,12 +31,13 @@ export default function AnalyticsPage() {
 
   const fetchHabits = async () => {
     try {
-      const response = await fetch("/api/habits")
+      const response = await fetch("/api/analytics")
       if (response.ok) {
         const data = await response.json()
         setHabits(data)
-        if (data.length > 0) {
-          setSelectedHabit(data[0].id)
+        const activeHabits = data.filter((h: Habit) => h.isActive)
+        if (activeHabits.length > 0) {
+          setSelectedHabit(activeHabits[0].id)
         }
       }
     } catch (error) {
@@ -60,17 +64,18 @@ export default function AnalyticsPage() {
   const getCompletionData = () => {
     const { start, end } = getDateRange()
     const days: { date: string; completed: number; total: number }[] = []
+    const activeHabits = habits.filter(habit => habit.isActive)
     
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const dateStr = format(d, "yyyy-MM-dd")
-      const completed = habits.filter(habit => 
+      const completed = activeHabits.filter(habit => 
         habit.entries.some(entry => entry.date === dateStr && entry.value > 0)
       ).length
       
       days.push({
         date: format(d, "MM/dd"),
         completed,
-        total: habits.length,
+        total: activeHabits.length,
       })
     }
     
@@ -78,51 +83,74 @@ export default function AnalyticsPage() {
   }
 
   const getStreakData = () => {
-    return habits.map(habit => {
+    return habits.filter(habit => habit.isActive).map(habit => {
       let currentStreak = 0
       let maxStreak = 0
-      let tempStreak = 0
       
-      const sortedEntries = habit.entries
+      // Get all completed entries sorted by date
+      const completedEntries = habit.entries
         .filter(entry => entry.value > 0)
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-
+        .map(entry => entry.date)
+        .sort((a, b) => new Date(b).getTime() - new Date(a).getTime()) // Sort desc for current streak
+      
       const today = format(new Date(), "yyyy-MM-dd")
-      let lastDate = new Date()
-      lastDate.setDate(lastDate.getDate() - 1)
-
-      // Calculate current streak
-      for (let i = 0; i < 30; i++) {
-        const checkDate = format(lastDate, "yyyy-MM-dd")
-        const hasEntry = habit.entries.some(entry => entry.date === checkDate && entry.value > 0)
+      
+      // Calculate current streak (going backwards from today)
+      let currentDate = today
+      let dayIndex = 0
+      
+      while (dayIndex < 365) { // Limit to prevent infinite loops
+        const hasEntry = completedEntries.includes(currentDate)
         
         if (hasEntry) {
           currentStreak++
         } else {
-          break
+          // If we haven't found any entries yet, check previous day
+          // Otherwise, break the streak
+          if (currentStreak > 0) {
+            break
+          }
         }
         
-        lastDate.setDate(lastDate.getDate() - 1)
+        // Move to previous day
+        const date = new Date(currentDate)
+        date.setDate(date.getDate() - 1)
+        currentDate = format(date, "yyyy-MM-dd")
+        dayIndex++
+        
+        // If we haven't found any entries in the first 30 days, stop
+        if (currentStreak === 0 && dayIndex > 30) {
+          break
+        }
       }
 
       // Calculate max streak
-      for (let i = 0; i < sortedEntries.length; i++) {
-        if (i === 0) {
-          tempStreak = 1
-        } else {
-          const prevDate = new Date(sortedEntries[i - 1].date)
-          const currDate = new Date(sortedEntries[i].date)
+      if (completedEntries.length === 0) {
+        maxStreak = 0
+      } else {
+        // Sort entries chronologically for max streak calculation
+        const chronologicalEntries = [...completedEntries].sort((a, b) => 
+          new Date(a).getTime() - new Date(b).getTime()
+        )
+        
+        let tempStreak = 1
+        maxStreak = 1
+        
+        for (let i = 1; i < chronologicalEntries.length; i++) {
+          const prevDate = new Date(chronologicalEntries[i - 1])
+          const currDate = new Date(chronologicalEntries[i])
           const diffDays = Math.floor((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24))
           
           if (diffDays === 1) {
+            // Consecutive day
             tempStreak++
-          } else {
             maxStreak = Math.max(maxStreak, tempStreak)
+          } else {
+            // Streak broken
             tempStreak = 1
           }
         }
       }
-      maxStreak = Math.max(maxStreak, tempStreak)
 
       return {
         name: habit.name,
@@ -157,6 +185,7 @@ export default function AnalyticsPage() {
   const streakData = getStreakData()
   const heatmapData = getHeatmapData()
 
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-96">
@@ -165,10 +194,10 @@ export default function AnalyticsPage() {
     )
   }
 
-  if (habits.length === 0) {
+  if (habits.filter(h => h.isActive).length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500 mb-4">No habits to analyze yet.</p>
+        <p className="text-gray-500 mb-4">No active habits to analyze yet.</p>
         <p className="text-sm text-gray-400">Create some habits and start tracking to see your analytics!</p>
       </div>
     )
@@ -194,8 +223,8 @@ export default function AnalyticsPage() {
       {/* Overview Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-900">Total Habits</h3>
-          <p className="text-3xl font-bold text-indigo-600 mt-2">{habits.length}</p>
+          <h3 className="text-lg font-medium text-gray-900">Active Habits</h3>
+          <p className="text-3xl font-bold text-indigo-600 mt-2">{habits.filter(h => h.isActive).length}</p>
         </div>
         
         <div className="bg-white p-6 rounded-lg shadow">
@@ -226,36 +255,133 @@ export default function AnalyticsPage() {
       {/* Completion Trends */}
       <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-xl font-semibold mb-4">Completion Trends</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={completionData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" />
-            <YAxis />
-            <Tooltip />
-            <Line
-              type="monotone"
-              dataKey="completed"
-              stroke="#6366f1"
-              strokeWidth={2}
-              name="Completed Habits"
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <Chart
+          options={{
+            chart: {
+              height: 300,
+              type: 'line',
+              toolbar: { show: false },
+              zoom: { enabled: false }
+            },
+            dataLabels: { enabled: false },
+            stroke: { 
+              curve: 'smooth', 
+              width: 3
+            },
+            colors: ['#6366f1'],
+            xaxis: {
+              categories: completionData.map(d => d.date),
+              labels: {
+                style: {
+                  colors: '#6b7280'
+                }
+              }
+            },
+            yaxis: {
+              min: 0,
+              labels: {
+                style: {
+                  colors: '#6b7280'
+                }
+              }
+            },
+            grid: {
+              strokeDashArray: 3,
+              borderColor: '#e5e7eb'
+            },
+            tooltip: {
+              y: {
+                formatter: (val: number) => `${val} habits completed`
+              }
+            },
+            noData: {
+              text: 'No completion data available',
+              align: 'center',
+              verticalAlign: 'middle',
+              style: {
+                color: '#6b7280'
+              }
+            }
+          }}
+          series={[{
+            name: 'Completed Habits',
+            data: completionData.map(d => d.completed)
+          }]}
+          type="line"
+          height={300}
+        />
       </div>
 
       {/* Streak Analysis */}
       <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-xl font-semibold mb-4">Streak Analysis</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={streakData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="currentStreak" fill="#10b981" name="Current Streak" />
-            <Bar dataKey="maxStreak" fill="#6366f1" name="Max Streak" />
-          </BarChart>
-        </ResponsiveContainer>
+        <Chart
+          options={{
+            chart: {
+              height: 300,
+              type: 'bar',
+              toolbar: { show: false }
+            },
+            plotOptions: {
+              bar: {
+                horizontal: false,
+                columnWidth: '55%',
+                borderRadius: 4
+              }
+            },
+            dataLabels: { enabled: false },
+            colors: ['#10b981', '#6366f1'],
+            xaxis: {
+              categories: streakData.map(d => d.name),
+              labels: {
+                style: {
+                  colors: '#6b7280'
+                }
+              }
+            },
+            yaxis: {
+              min: 0,
+              labels: {
+                style: {
+                  colors: '#6b7280'
+                }
+              }
+            },
+            grid: {
+              strokeDashArray: 3,
+              borderColor: '#e5e7eb'
+            },
+            legend: {
+              position: 'top',
+              horizontalAlign: 'left'
+            },
+            tooltip: {
+              y: {
+                formatter: (val: number) => `${val} days`
+              }
+            },
+            noData: {
+              text: 'No streak data available',
+              align: 'center',
+              verticalAlign: 'middle',
+              style: {
+                color: '#6b7280'
+              }
+            }
+          }}
+          series={[
+            {
+              name: 'Current Streak',
+              data: streakData.map(d => d.currentStreak)
+            },
+            {
+              name: 'Max Streak',
+              data: streakData.map(d => d.maxStreak)
+            }
+          ]}
+          type="bar"
+          height={300}
+        />
       </div>
 
       {/* Habit Heatmap */}
@@ -267,7 +393,7 @@ export default function AnalyticsPage() {
             onChange={(e) => setSelectedHabit(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md"
           >
-            {habits.map(habit => (
+            {habits.filter(h => h.isActive).map(habit => (
               <option key={habit.id} value={habit.id}>{habit.name}</option>
             ))}
           </select>

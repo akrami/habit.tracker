@@ -35,17 +35,11 @@ export async function GET(
       },
       include: {
         category: true,
-        tags: {
-          include: {
-            tag: true,
-          },
-        },
         entries: {
           orderBy: {
             date: "desc",
           },
         },
-        goals: true,
       },
     })
 
@@ -98,11 +92,6 @@ export async function PUT(
       },
       include: {
         category: true,
-        tags: {
-          include: {
-            tag: true,
-          },
-        },
       },
     })
 
